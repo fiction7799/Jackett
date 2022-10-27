@@ -14,6 +14,8 @@ namespace Jackett.Common.Models.DTO
         [DataMember]
         public bool external { get; set; }
         [DataMember]
+        public bool cors { get; set; }
+        [DataMember]
         public string api_key { get; set; }
         [DataMember]
         public string blackholedir { get; set; }
@@ -27,6 +29,8 @@ namespace Jackett.Common.Models.DTO
         public bool logging { get; set; }
         [DataMember]
         public string basepathoverride { get; set; }
+        [DataMember]
+        public string baseurloverride { get; set; }
         [DataMember]
         public bool cache_enabled { get; set; }
         [DataMember]
@@ -64,6 +68,7 @@ namespace Jackett.Common.Models.DTO
             this.notices = notices;
             port = config.Port;
             external = config.AllowExternal;
+            cors = config.AllowCORS;
             api_key = config.APIKey;
             blackholedir = config.BlackholeDir;
             updatedisabled = config.UpdateDisabled;
@@ -71,6 +76,7 @@ namespace Jackett.Common.Models.DTO
             password = string.IsNullOrEmpty(config.AdminPassword) ? string.Empty : config.AdminPassword.Substring(0, 10);
             logging = config.RuntimeSettings.TracingEnabled;
             basepathoverride = config.BasePathOverride;
+            baseurloverride = config.BaseUrlOverride;
             cache_enabled = config.CacheEnabled;
             cache_ttl = config.CacheTtl;
             cache_max_results_per_indexer = config.CacheMaxResultsPerIndexer;

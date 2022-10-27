@@ -80,7 +80,7 @@ settings:
   - name: info_results
     type: info
     label: "Search results"
-    default: For best results, change the <b>Torrents per page:</b> setting to <b>100</b> on your account profile.
+    default: "Only the <b>Base</b> style is supported with this indexer.<br />For best results, change the <b>Torrents per page:</b> setting to <b>100</b> on your account profile."
   - name: sort
     type: select
     label: Sort requested from site
@@ -165,7 +165,7 @@ search:
       attribute: onmouseover
       filters:
         - name: regexp
-          args: "src=(.+?) width="
+          args: src=([^\s]+)
     # two flavours
     date_day:
       # Yesterday

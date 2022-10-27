@@ -7,6 +7,8 @@ type: public
 encoding: UTF-8
 links:
   - https://nyaa.si/
+  - https://nyaa.iss.ink/
+  - https://nyaa.nocensor.world/ # for magnets only
 legacylinks:
   - https://nyaa.black-mirror.xyz/
   - https://nyaa.unblocked.casa/
@@ -112,9 +114,10 @@ caps:
     - {id: 6_2, cat: PC/Games, desc: "Games"}
   modes:
     search: [q]
-    tv-search: [q]
+    tv-search: [q, season, ep]
     movie-search: [q]
     book-search: [q]
+  allowrawsearch: true
 
 search:
   paths:

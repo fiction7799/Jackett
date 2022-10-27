@@ -39,14 +39,30 @@ namespace Jackett.Common.Indexers
         private const string SearchUrl = "buscar/";
 
         public override string[] AlternativeSiteLinks { get; protected set; } = {
-            "https://dontorrent.it/",
+            "https://dontorrent.me/",
             "https://todotorrents.net/",
             "https://tomadivx.net/",
-            "https://seriesblanco.one/"
+            "https://seriesblanco.one/",
+            "https://verdetorrent.com/",
+            "https://naranjatorrent.com/"
         };
 
         public override string[] LegacySiteLinks { get; protected set; } = {
-            "https://dontorrent.li/"
+            "https://dontorrent.ch/",
+            "https://dontorrent.vet/",
+            "https://dontorrent.dog/",
+            "https://dontorrent.dev/",
+            "https://dontorrent.bid/",
+            "https://dontorrent.pet/",
+            "https://dontorrent.soy/",
+            "https://dontorrent.moe/",
+            "https://dontorrent.pub/",
+            "https://dontorrent.tf/",
+            "https://dontorrent.vin/",
+            "https://dontorrent.ist/",
+            "https://dontorrent.uno/",
+            "https://dontorrent.fans/",
+            "https://dontorrent.ltd/",
         };
 
         private static Dictionary<string, string> CategoriesMap => new Dictionary<string, string>
@@ -64,7 +80,7 @@ namespace Jackett.Common.Indexers
             : base(id: "dontorrent",
                    name: "DonTorrent",
                    description: "DonTorrent is a SPANISH public tracker for MOVIES / TV / GENERAL",
-                   link: "https://dontorrent.it/",
+                   link: "https://dontorrent.me/",
                    caps: new TorznabCapabilities
                    {
                        TvSearchParams = new List<TvSearchParam>
@@ -130,7 +146,7 @@ namespace Jackett.Common.Indexers
         public override async Task<byte[]> Download(Uri link)
         {
             var downloadUrl = link.ToString();
-            if (downloadUrl.Contains("cdn.pizza"))
+            if (downloadUrl.Contains("cdn.pizza") || downloadUrl.Contains("blazing.network") || downloadUrl.Contains("tor.cat") || downloadUrl.Contains("cdndelta.com"))
             {
                 return await base.Download(link);
             }
@@ -214,11 +230,13 @@ namespace Jackett.Common.Indexers
                         // list results
                         if (!parsedDetailsLink.Contains(rowDetailsLink) && rowTitle != null)
                         {
-                            var cat = GetCategoryFromURL(rowDetailsLink);
+                            var cat = GetCategory(rowTitle, rowDetailsLink);
                             switch (cat)
                             {
                                 case "pelicula":
+                                case "pelicula4k":
                                 case "serie":
+                                case "seriehd":
                                 case "musica":
                                     await ParseRelease(releases, rowDetailsLink, rowTitle, cat, rowQuality, query, false);
                                     parsedDetailsLink.Add(rowDetailsLink);

@@ -85,7 +85,6 @@ caps:
     - {id: 27, cat: XXX/SD, desc: "XXX SD"}
     - {id: 76, cat: XXX, desc: "XXX Andere"}
 
-
   modes:
     search: [q]
     tv-search: [q, season, ep, imdbid]
@@ -131,11 +130,11 @@ settings:
 
 login:
   path: signin.php
-  method: form
-  form: form
+  method: post
   inputs:
     user: "{{ .Config.user }}"
     pass: "{{ .Config.pass }}"
+    returnto: "%2Fbrowse.php"
   error:
     - selector: .error
   test:

@@ -20,7 +20,7 @@ namespace Jackett.Common.Indexers
     [ExcludeFromCodeCoverage]
     public class Cinecalidad : BaseWebIndexer
     {
-        private const int MaxLatestPageLimit = 3; // 10 items per page * 3 pages = 30
+        private const int MaxLatestPageLimit = 3; // 12 items per page * 3 pages = 36
         private const int MaxSearchPageLimit = 6;
 
         public override string[] LegacySiteLinks { get; protected set; } = {
@@ -33,7 +33,11 @@ namespace Jackett.Common.Indexers
             "https://cinecalidad.unbl0ck.xyz/",
             "https://cinecalidad.u4m.club/",
             "https://cinecalidad.mrunblock.icu/",
-            "https://www.cine-calidad.com/"
+            "https://cinecalidad3.com/",
+            "https://www5.cine-calidad.com/",
+            "https://v3.cine-calidad.com/",
+            "https://www.cine-calidad.com/",
+            "https://www.cinecalidad.lat/"
         };
 
         public Cinecalidad(IIndexerConfigurationService configService, WebClient wc, Logger l, IProtectionService ps,
@@ -41,7 +45,7 @@ namespace Jackett.Common.Indexers
             : base(id: "cinecalidad",
                    name: "Cinecalidad",
                    description: "Películas Full HD en Latino Dual.",
-                   link: "https://www.cinecalidad.lat/",
+                   link: "https://cinecalidad.dev/",
                    caps: new TorznabCapabilities
                    {
                        MovieSearchParams = new List<MovieSearchParam> { MovieSearchParam.Q }
@@ -78,8 +82,9 @@ namespace Jackett.Common.Indexers
             var templateUrl = SiteLink;
             templateUrl += "{0}?s="; // placeholder for page
 
-            var maxPages = MaxLatestPageLimit; // we scrape only 2 pages for recent torrents
-            if (!string.IsNullOrWhiteSpace(query.GetQueryString()))
+            var maxPages = MaxLatestPageLimit; // we scrape only 3 pages for recent torrents
+            var recent = !string.IsNullOrWhiteSpace(query.GetQueryString());
+            if (recent)
             {
                 templateUrl += WebUtilityHelpers.UrlEncode(query.GetQueryString(), Encoding.UTF8);
                 maxPages = MaxSearchPageLimit;
@@ -101,7 +106,7 @@ namespace Jackett.Common.Indexers
                 }
                 releases.AddRange(pageReleases);
 
-                if (pageReleases.Count < 1)
+                if (pageReleases.Count < 1 && recent)
                     break; // this is the last page
             }
 
@@ -118,6 +123,15 @@ namespace Jackett.Common.Indexers
                 var dom = parser.ParseDocument(results.ContentString);
                 var protectedLink = dom.QuerySelector("a:contains('Torrent')").GetAttribute("data-url");
                 protectedLink = Base64Decode(protectedLink);
+                // turn
+                // link=https://cinecalidad.dev/pelicula/la-chica-salvaje/
+                // and 
+                // protectedlink=https://cinecalidad.dev/links/MS8xMDA5NTIvMQ==
+                // into
+                // https://cinecalidad.dev/pelicula/la-chica-salvaje/?link=MS8xMDA5NTIvMQ== 
+                var protectedLinkSplit = protectedLink.Split('/');
+                var key = protectedLinkSplit.Last();
+                protectedLink = link.ToString() + "?link=" + key;
                 protectedLink = GetAbsoluteUrl(protectedLink);
 
                 results = await RequestWithCookiesAsync(protectedLink);
@@ -149,7 +163,7 @@ namespace Jackett.Common.Indexers
                         continue; // we only support movies
 
                     var qLink = row.QuerySelector("a.absolute");
-                    var qImg = row.QuerySelector("img");
+                    var qImg = row.QuerySelector("img.rounded");
                     if (qLink == null || qImg == null)
                         continue; // skip results without image
 

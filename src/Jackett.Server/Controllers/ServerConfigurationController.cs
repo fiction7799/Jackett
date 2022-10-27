@@ -79,6 +79,7 @@ namespace Jackett.Server.Controllers
             var originalAllowExternal = serverConfig.AllowExternal;
             var port = config.port;
             var external = config.external;
+            var cors = config.cors;
             var saveDir = config.blackholedir;
             var updateDisabled = config.updatedisabled;
             var preRelease = config.prerelease;
@@ -92,6 +93,21 @@ namespace Jackett.Server.Controllers
                     throw new Exception("The Base Path Override must start with a /");
             }
 
+            var baseUrlOverride = config.baseurloverride;
+            if (baseUrlOverride != serverConfig.BaseUrlOverride)
+            {
+                baseUrlOverride = baseUrlOverride.TrimEnd('/');
+                if (string.IsNullOrWhiteSpace(baseUrlOverride))
+                    baseUrlOverride = "";
+                else if (!Uri.TryCreate(baseUrlOverride, UriKind.Absolute, out var uri)
+                    || !(uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+                    || !Uri.IsWellFormedUriString(baseUrlOverride, UriKind.Absolute))
+                    throw new Exception("Base URL Override is invalid. Example: http://jackett:9117");
+
+                serverConfig.BaseUrlOverride = baseUrlOverride;
+                configService.SaveConfig(serverConfig);
+            }
+
             var cacheEnabled = config.cache_enabled;
             var cacheTtl = config.cache_ttl;
             var cacheMaxResultsPerIndexer = config.cache_max_results_per_indexer;
@@ -99,13 +115,16 @@ namespace Jackett.Server.Controllers
             var omdbApiUrl = config.omdburl;
 
             if (config.basepathoverride != serverConfig.BasePathOverride)
-            {
                 webHostRestartNeeded = true;
-            }
 
+            if (config.cors != serverConfig.AllowCORS)
+                webHostRestartNeeded = true;
+
+            serverConfig.AllowCORS = cors;
             serverConfig.UpdateDisabled = updateDisabled;
             serverConfig.UpdatePrerelease = preRelease;
             serverConfig.BasePathOverride = basePathOverride;
+            serverConfig.BaseUrlOverride = baseUrlOverride;
             serverConfig.CacheEnabled = cacheEnabled;
             serverConfig.CacheTtl = cacheTtl;
             serverConfig.CacheMaxResultsPerIndexer = cacheMaxResultsPerIndexer;
@@ -119,7 +138,8 @@ namespace Jackett.Server.Controllers
                 if (string.IsNullOrWhiteSpace(config.flaresolverrurl))
                     config.flaresolverrurl = "";
                 else if (!Uri.TryCreate(config.flaresolverrurl, UriKind.Absolute, out var uri)
-                    || !(uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps))
+                    || !(uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+                    || !Uri.IsWellFormedUriString(config.flaresolverrurl, UriKind.Absolute))
                     throw new Exception("FlareSolverr API URL is invalid. Example: http://127.0.0.1:8191");
 
                 if (config.flaresolverr_maxtimeout < 5000)

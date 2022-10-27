@@ -7,8 +7,6 @@ type: semi-private
 encoding: UTF-8
 links:
   - https://extremlymtorrents.ws/
-certificates:
-  - 31681d3324d3fef65b04b6ab2e634445c4ff06d4 # expired 6-nov-21
 caps:
   categorymappings:
     - {id: 15, cat: Movies/HD, desc: "1080p HD"}
@@ -128,19 +126,17 @@ search:
       filters:
         - name: querystring
           args: cat
-    language:
+    _language:
       selector: td:nth-last-child(5)
-    description:
+    _vip:
       selector: img[src="/images/vip-icon.png"]
-      attribute: src
-      filters:
-        - name: replace
-          args: ["/images/vip-icon.png", " VIP ONLY"]
+      attribute: alt
+      optional: true
     title:
       selector: a[href^="file.php?id="] b
       filters:
         - name: append
-          args: " {{ .Result.language }}{{ .Result.description }}"
+          args: " {{ .Result._language }}{{ if .Result._vip }} VIP ONLY{{ else }}{{ end }}"
     details:
       selector: a[href^="file.php?id="]
       attribute: href
@@ -172,6 +168,19 @@ search:
         "*": 1
     uploadvolumefactor:
       text: 1
+    genre_optional:
+      # Drama, Romance | N/A | 2022 | 112 min | N/A
+      # Drama:Family:Romance
+      selector: td:nth-child(2)
+      remove: a
+      filters:
+        - name: split
+          args: ["|", 0]
+    genre:
+      # if its VIP then do not keep genre
+      text: "{{ if .Result._vip }}{{ else }}{{ .Result.genre_optional }}{{ end }}"
+    description:
+      text: "{{ if .Result._vip }}VIP ONLY{{ else }}{{ .Result.genre }}{{ end }}"
     minimumratio:
       text: 1.0
     minimumseedtime:

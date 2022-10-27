@@ -47,10 +47,11 @@ caps:
     - {id: 9938, cat: Movies, desc: "Turkish Dramas"}
     - {id: 10293, cat: Movies, desc: "2021"}
     - {id: 8569, cat: Movies, desc: "2021"}
+    - {id: 8610, cat: Movies, desc: "2022"}
 
   modes:
     search: [q]
-    tv-search: [q]
+    tv-search: [q, season, ep]
     movie-search: [q]
 
 settings: []
@@ -64,16 +65,10 @@ download:
         - name: regexp
           args: ([A-F|a-f|0-9]{40})
     title:
-      selector: h2
+      selector: th[colspan="5"]
       filters:
         - name: replace
-          args: ["Full Movie ", ""]
-        - name: replace
-          args: ["Torrent Magnet ", ""]
-        - name: replace
-          args: ["Download", ""]
-        - name: replace
-          args: ["…", ""]
+          args: [" – movietorrent", ""]
         - name: trim
         - name: validfilename
 

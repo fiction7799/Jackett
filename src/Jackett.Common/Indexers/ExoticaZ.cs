@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using Jackett.Common.Indexers.Abstract;
 using Jackett.Common.Models;
+using Jackett.Common.Models.IndexerConfig.Bespoke;
 using Jackett.Common.Services.Interfaces;
 using Jackett.Common.Utils;
 using Jackett.Common.Utils.Clients;
@@ -14,6 +15,8 @@ namespace Jackett.Common.Indexers
     [ExcludeFromCodeCoverage]
     public class ExoticaZ : AvistazTracker
     {
+        private new ConfigurationDataAvistazTracker configData => (ConfigurationDataAvistazTracker)base.configData;
+
         public override string[] LegacySiteLinks { get; protected set; } =
         {
             "https://torrents.yourexotic.com/"
@@ -25,13 +28,7 @@ namespace Jackett.Common.Indexers
                    name: "ExoticaZ",
                    description: "ExoticaZ (YourExotic) is a Private Torrent Tracker for 3X",
                    link: "https://exoticaz.to/",
-                   caps: new TorznabCapabilities
-                   {
-                       MovieSearchParams = new List<MovieSearchParam>
-                       {
-                           MovieSearchParam.Q
-                       }
-                   },
+                   caps: new TorznabCapabilities(),
                    configService: configService,
                    client: wc,
                    logger: l,
@@ -39,14 +36,14 @@ namespace Jackett.Common.Indexers
                    cs: cs
                    )
         {
-            AddCategoryMapping(1, TorznabCatType.XXXx264);
-            AddCategoryMapping(2, TorznabCatType.XXXPack);
-            AddCategoryMapping(3, TorznabCatType.XXXPack);
-            AddCategoryMapping(4, TorznabCatType.XXXPack);
-            AddCategoryMapping(5, TorznabCatType.XXXDVD);
-            AddCategoryMapping(6, TorznabCatType.XXXx264);
-            AddCategoryMapping(7, TorznabCatType.XXXImageSet);
-            AddCategoryMapping(8, TorznabCatType.XXXImageSet);
+            AddCategoryMapping(1, TorznabCatType.XXXx264, "Video Clip");
+            AddCategoryMapping(2, TorznabCatType.XXXPack, "Video Pack");
+            AddCategoryMapping(3, TorznabCatType.XXXPack, "Siterip Pack");
+            AddCategoryMapping(4, TorznabCatType.XXXPack, "Pornstar Pack");
+            AddCategoryMapping(5, TorznabCatType.XXXDVD, "DVD");
+            AddCategoryMapping(6, TorznabCatType.XXXx264, "BluRay");
+            AddCategoryMapping(7, TorznabCatType.XXXImageSet, "Photo Pack");
+            AddCategoryMapping(8, TorznabCatType.XXXImageSet, "Books & Magazines");
         }
 
         protected override List<KeyValuePair<string, string>> GetSearchQueryParameters(TorznabQuery query)
@@ -58,6 +55,9 @@ namespace Jackett.Common.Indexers
                 {"category", categoryMapping.Any() ? categoryMapping.First() : "0"},
                 {"search", GetSearchTerm(query).Trim()}
             };
+
+            if (configData.Freeleech.Value)
+                qc.Add("discount[]", "1");
 
             return qc;
         }

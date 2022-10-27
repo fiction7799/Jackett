@@ -24,7 +24,6 @@ search:
     - path: /other/all.rss
       response:
         type: xml
-        attribute: attributes
 
   rows:
     selector: rss > channel > item
@@ -34,7 +33,6 @@ search:
   fields:
     category:
       selector: raw_title
-      filters:
       case:
         ":contains(\"720p\")": 2
         ":contains(\"1080p\")": 2

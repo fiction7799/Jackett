@@ -16,7 +16,7 @@ caps:
     - {id: 5, cat: TV, desc: "Série"}
     - {id: 6, cat: TV/Anime, desc: "Série anim"}
     - {id: 7, cat: Movies/Other, desc: "Film d'animation"}
-    - {id: 7, cat: Audio/Video, desc: "Concert"}
+    - {id: 9, cat: Audio/Video, desc: "Concert"}
     - {id: 11, cat: TV/Documentary, desc: "Documentaire"}
     - {id: 13, cat: Movies/Other, desc: "Court-métrage"}
     - {id: 14, cat: Movies/Other, desc: "Clip"}
@@ -26,7 +26,7 @@ caps:
 
   modes:
     search: [q]
-    tv-search: [q]
+    tv-search: [q, season, ep]
     movie-search: [q]
 
 settings:
@@ -241,16 +241,16 @@ search:
       text: "{{ .Result.title_phase1 }}"
       filters:
         - name: re_replace
-          args: ["(?i)([\\s|\\.|-]*multi[\\s|\\.|-]*)", ".{{ .Config.multilanguage }}."]
+          args: ["(?i)([\\s|\\.|-]multi[\\s|\\.|-])", ".{{ .Config.multilanguage }}."]
     title_phase2:
       text: "{{ if .Config.multilang }}{{ .Result.title_multilang }}{{ else }}{{ .Result.title_phase1 }}{{ end }}"
     title_vostfr:
       text: "{{ .Result.title_phase2 }}"
       filters:
         - name: re_replace
-          args: ["(?i)([\\s|\\.|-]*vostfr[\\s|\\.|-]*)", ".ENGLISH."]
+          args: ["(?i)([\\s|\\.|-]vostfr[\\s|\\.|-])", ".ENGLISH."]
         - name: re_replace
-          args: ["(?i)([\\s|\\.|-]*subfrench[\\s|\\.|-]*)", ".ENGLISH."]
+          args: ["(?i)([\\s|\\.|-]subfrench[\\s|\\.|-])", ".ENGLISH."]
     title:
       text: "{{ if .Config.vostfr }}{{ .Result.title_vostfr }}{{ else }}{{ .Result.title_phase2 }}{{ end }}"
     description:

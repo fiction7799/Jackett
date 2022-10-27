@@ -76,12 +76,17 @@ search:
   inputs:
     $raw: "{{ range .Categories }}categories[]={{.}}&{{end}}{{ if .Config.freeleech }}freeleech=1&{{ else }}{{ end }}"
     # note: dashboard only supports imdbid (tt12345678). Since tvdbid and tmdbid are just numbers the dashboard sends them as keywords
-    # which will fail title matching because we need the andmatch to filter the web sites title missmatches (it searches in descriptions too)
+    # which will fail title matching because we need the andmatch to filter the web sites title mismatches (it searches in descriptions too)
     search: "{{ if or .Query.IMDBID .Query.TVDBID .Query.TMDBID }}{{ or .Query.IMDBIDShort .Query.TVDBID .Query.TMDBID }}{{ else }}{{ .Keywords }}{{ end }}"
     tags: ""
     sorting: "{{ .Config.sort }}"
     direction: "{{ .Config.type }}"
     qty: 100
+    # the tags search in combo with search keywords does not yield expected results.
+
+  keywordsfilters:
+    - name: re_replace
+      args: ["\\.", " "]
 
   rows:
     selector: table > tbody > tr
@@ -103,6 +108,15 @@ search:
     download:
       selector: a[href*="/download/"]
       attribute: href
+    genre:
+      selector: td:nth-child(2)
+      filters:
+        - name: re_replace
+          args: ["(?i)(Science Fiction)", "Science_Fiction"]
+        - name: validate
+          args: "Action, Adventure, Animation, Biography, Comedy, Crime, Documentary, Drama, Family, Fantasy, Game-Show, History, Horror, Music, Musical, Mystery, News, Reality-TV, Romance, Science_Fiction, Sitcom, Sport, Talk-Show, Thriller, War, Western"
+    description:
+      text: "{{ .Result.genre }}"
     date:
       selector: td:nth-child(2) small
       filters:
@@ -121,17 +135,17 @@ search:
       selector: a[href*="imdb.com/title/tt"]
       attribute: href
     tmdbid:
-      selector: a[href*="themoviedb.org/movie/"]
+      selector: a[href*="themoviedb.org/movie/"], a[href*="themoviedb.org/tv/"]
       attribute: href
     downloadvolumefactor:
       case:
-        i.fa-star: 0 # Freeleech
-        i.fa-certificate: 0 # Featured
+        path[d^="M1728 "]: 0 # Freeleech
+        path[d^="M320 "]: 0 # Featured
         "*": 1
     uploadvolumefactor:
       case:
-        i.fa-certificate: 2 # Featured
-        i.fa-gem: 2 # Double Upload
+        path[d^="M320 "]: 2 # Featured
+        path[d^="M485.5 "]: 2 # Double Upload
         "*": 1
     minimumratio:
       text: 1.0

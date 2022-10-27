@@ -49,7 +49,7 @@ namespace Jackett.Common.Indexers
             "https://iptorrents.eu/"
         };
 
-        private new ConfigurationDataCookie configData => (ConfigurationDataCookie)base.configData;
+        private new ConfigurationDataCookieUA configData => (ConfigurationDataCookieUA)base.configData;
 
         public IPTorrents(IIndexerConfigurationService configService, WebClient wc, Logger l, IProtectionService ps,
             ICacheService cs)
@@ -61,11 +61,11 @@ namespace Jackett.Common.Indexers
                    {
                        TvSearchParams = new List<TvSearchParam>
                        {
-                           TvSearchParam.Q, TvSearchParam.Season, TvSearchParam.Ep, TvSearchParam.ImdbId
+                           TvSearchParam.Q, TvSearchParam.Season, TvSearchParam.Ep, TvSearchParam.ImdbId, TvSearchParam.Genre
                        },
                        MovieSearchParams = new List<MovieSearchParam>
                        {
-                           MovieSearchParam.Q, MovieSearchParam.ImdbId
+                           MovieSearchParam.Q, MovieSearchParam.ImdbId, MovieSearchParam.Genre
                        },
                        MusicSearchParams = new List<MusicSearchParam>
                        {
@@ -81,7 +81,7 @@ namespace Jackett.Common.Indexers
                    logger: l,
                    p: ps,
                    cacheService: cs,
-                   configData: new ConfigurationDataCookie("For best results, change the 'Torrents per page' option to 100 and check the 'Torrents - Show files count' option in the website Settings."))
+                   configData: new ConfigurationDataCookieUA("For best results, change the 'Torrents per page' option to 100 and check the 'Torrents - Show files count' option in the website Settings."))
         {
             Encoding = Encoding.UTF8;
             Language = "en-US";
@@ -177,6 +177,7 @@ namespace Jackett.Common.Indexers
             LoadValuesFromJson(configJson);
 
             CookieHeader = configData.Cookie.Value;
+
             try
             {
                 var results = await PerformQuery(new TorznabQuery());
@@ -190,7 +191,7 @@ namespace Jackett.Common.Indexers
             catch (Exception e)
             {
                 IsConfigured = false;
-                throw new Exception("Your cookie did not work: " + e.Message);
+                throw new Exception("Your cookie did not work, make sure the user agent matches your computer: " + e.Message);
             }
         }
 
@@ -198,11 +199,66 @@ namespace Jackett.Common.Indexers
         {
             var releases = new List<ReleaseInfo>();
 
+            var ValidList = new List<string>() {
+                "action",
+                "adventure",
+                "animation",
+                "biography",
+                "comedy",
+                "crime",
+                "documentary",
+                "drama",
+                "family",
+                "fantasy",
+                "game-show",
+                "history",
+                "horror",
+                "music",
+                "musical",
+                "mystery",
+                "news",
+                "reality-tv",
+                "romance",
+                "sci-fi",
+                "sitcom",
+                "sport",
+                "talk-show",
+                "thriller",
+                "war",
+                "western"
+            };
+
+
+            /* notes: 
+             * IPTorrents can search for genre (tags) using the default title&tags search
+             * qf= 
+             * "" = Title and Tags
+             * ti = Title
+             * ta = Tags
+             * all = Title, Tags & Description
+             * adv = Advanced
+             * 
+             * But only movies and tv have tags.
+             */
+
             var qc = new NameValueCollection();
+
+
+            Dictionary<string, string> headers = null;
+
+            if (!string.IsNullOrEmpty(configData.UserAgent.Value))
+            {
+                headers = new Dictionary<string, string>();
+                headers.Add("User-Agent", configData.UserAgent.Value);
+            }
 
             if (query.IsImdbQuery)
                 qc.Add("q", query.ImdbID);
-            else if (!string.IsNullOrWhiteSpace(query.GetQueryString()))
+            else
+            if (query.IsGenreQuery)
+                qc.Add("q", query.GetQueryString() + " " + query.Genre);
+            else
+            if (!string.IsNullOrWhiteSpace(query.GetQueryString()))
                 qc.Add("q", query.GetQueryString());
 
             foreach (var cat in MapTorznabCapsToTrackers(query))
@@ -214,7 +270,7 @@ namespace Jackett.Common.Indexers
             qc.Add("o", ((SingleSelectConfigurationItem)configData.GetDynamic("sort")).Value);
 
             var searchUrl = SearchUrl + "?" + qc.GetQueryString();
-            var response = await RequestWithCookiesAndRetryAsync(searchUrl, referer: SearchUrl);
+            var response = await RequestWithCookiesAndRetryAsync(searchUrl, referer: SearchUrl, headers: headers);
             var results = response.ContentString;
 
             if (results == null || !results.Contains("/lout.php"))
@@ -247,6 +303,9 @@ namespace Jackett.Common.Indexers
                     var publishDate = DateTimeUtil.FromTimeAgo(dateSplit.First());
                     var description = descrSplit.Length > 1 ? "Tags: " + descrSplit.First().Trim() : "";
                     description += dateSplit.Length > 1 ? " Uploaded by: " + dateSplit.Last().Trim() : "";
+
+                    char[] delimiters = { ',', ' ', '/', ')', '(', '.', ';', '[', ']', '"', '|', ':' };
+                    var releaseGenres = ValidList.Intersect(description.ToLower().Split(delimiters, System.StringSplitOptions.RemoveEmptyEntries)).ToList();
 
                     var catIcon = row.QuerySelector("td:nth-of-type(1) a");
                     if (catIcon == null)
@@ -289,6 +348,9 @@ namespace Jackett.Common.Indexers
                         MinimumRatio = 1,
                         MinimumSeedTime = 1209600 // 336 hours
                     };
+                    if (release.Genres == null)
+                        release.Genres = new List<string>();
+                    release.Genres = releaseGenres;
 
                     releases.Add(release);
                 }

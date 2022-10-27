@@ -23,6 +23,8 @@ caps:
     - {id: 71, cat: Movies, desc: "NFLIX"}
     - {id: 78, cat: TV, desc: "EXXEN"}
     - {id: 79, cat: TV, desc: "BLUTV"}
+    - {id: 90, cat: TV, desc: "Disney+"}
+    - {id: 91, cat: TV, desc: "Prime Video"}
     - {id: 58, cat: Movies, desc: "Film"}
     - {id: 72, cat: Movies, desc: "Belgesel"}
     - {id: 60, cat: Movies/3D, desc: "3D"}
@@ -53,9 +55,16 @@ caps:
     - {id: 46, cat: Audio, desc: "Yab@ncı MüziK"}
     - {id: 21, cat: Audio/Video, desc: "Video Klipler"}
     - {id: 2, cat: Console, desc: "Oyun"}
-    - {id: 74, cat: PC/Games, desc: "PC"}
-    - {id: 73, cat: Console, desc: "SONY-PS"}
+    - {id: 74, cat: PC/Games, desc: "Oyun PC"}
+    - {id: 84, cat: Console/PS3, desc: "Oyun Playstation"}
+    - {id: 85, cat: Console/PS3, desc: "Oyun Playstation 2"}
+    - {id: 82, cat: Console/PSP, desc: " Oyun PSP"}
+    - {id: 83, cat: Console/Other, desc: "Oyun Gameboy"}
+    - {id: 87, cat: Console/XBox, desc: "Oyun XBOX"}
+    - {id: 88, cat: Console/Other, desc: "Oyun NEO-GEO"}
+    - {id: 89, cat: Console/Wii, desc: "Oyun Nintendo Wii"}
     - {id: 6, cat: PC/0day, desc: "Program"}
+    - {id: 92, cat: PC/Mobile-Android, desc: "Android"}
     - {id: 47, cat: Other, desc: "Resimler"}
     - {id: 48, cat: TV, desc: "Televizyon"}
     - {id: 49, cat: TV/HD, desc: "Tv HD"}
@@ -162,9 +171,9 @@ search:
       selector: a[href*="?p=torrents&pid=10&action=download"]
       attribute: href
     date_year:
-      optional: true
       # Uploaded 30-01-2019 15:02 by
-      selector: td.torrent_name:not(:contains(" at "))
+      selector: td.torrent_name:not(:contains(" at ")):not(:has(abbr[data-time]))
+      optional: true
       filters:
         - name: regexp
           args: "Uploaded (.+?) by"
@@ -173,20 +182,22 @@ search:
         - name: dateparse
           args: "02-01-2006 15:04 -07:00"
     date_day:
-      optional: true
       # Uploaded Friday at 05:11 by
       # Uploaded Today at 00:48 by
       # Uploaded Yesterday at 23:57 by
-      selector: td.torrent_name:contains(" at ")
+      selector: td.torrent_name:contains(" at "):not(:has(abbr[data-time]))
+      optional: true
       filters:
         - name: regexp
           args: "Uploaded (.+?) by"
-        - name: replace
-          args: [" at ", " "]
-        - name: append
-          args: " +00:00" # auto adjusted by site account profile
+        - name: fuzzytime
+    date_unix:
+      # within the hour (unix)
+      selector: abbr[data-time]
+      attribute: data-time
+      optional: true
     date:
-      text: "{{ if or .Result.date_year .Result.date_day }}{{ or .Result.date_year .Result.date_day }}{{ else }}now{{ end }}"
+      text: "{{ if or .Result.date_year .Result.date_unix .Result.date_day }}{{ or .Result.date_year .Result.date_unix .Result.date_day }}{{ else }}now{{ end }}"
     size:
       selector: a[rel="torrent_size"]
     seeders:

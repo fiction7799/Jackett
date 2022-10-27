@@ -29,10 +29,11 @@ caps:
     - {id: 76, cat: Books, desc: "Self-Help"}
     - {id: 56, cat: TV/Sport, desc: "Sports"}
     - {id: 61, cat: Other, desc: "Tutorials"}
+    - {id: 81, cat: Books, desc: "Wordpress"}
 
   modes:
     search: [q]
-    tv-search: [q]
+    tv-search: [q, season, ep]
     book-search: [q]
     music-search: [q]
 
@@ -121,7 +122,7 @@ search:
       attribute: onmouseover
       filters:
         - name: regexp
-          args: "src=(.*?) width"
+          args: src=([^\s]+)
     files:
       selector: div.torrenttable:nth-last-child(6)
     size:

@@ -20,7 +20,6 @@ namespace Jackett.Common.Indexers.Abstract
     [ExcludeFromCodeCoverage]
     public abstract class SpeedAppTracker : BaseWebIndexer
     {
-        protected virtual string ItemsPerPage => "100";
         protected virtual bool UseP2PReleaseName => false;
         private readonly Dictionary<string, string> _apiHeaders = new Dictionary<string, string>
         {
@@ -89,7 +88,7 @@ namespace Jackett.Common.Indexers.Abstract
             //var categoryMapping = MapTorznabCapsToTrackers(query).Distinct().ToList();
             var qc = new List<KeyValuePair<string, string>> // NameValueCollection don't support cat[]=19&cat[]=6
             {
-                {"itemsPerPage", ItemsPerPage},
+                {"itemsPerPage", "100"},
                 {"sort", "torrent.createdAt"},
                 {"direction", "desc"}
             };
@@ -127,8 +126,14 @@ namespace Jackett.Common.Indexers.Abstract
                     var publishDate = DateTime.Parse(row.Value<string>("created_at"), CultureInfo.InvariantCulture);
                     var cat = row.Value<JToken>("category").Value<string>("id");
 
-                    // "description" field in API has too much HTML code
-                    var description = row.Value<string>("short_description");
+                    var description = "";
+                    var genres = row.Value<string>("short_description");
+                    char[] delimiters = { ',', ' ', '/', ')', '(', '.', ';', '[', ']', '"', '|', ':' };
+                    var genresSplit = genres.Split(delimiters, System.StringSplitOptions.RemoveEmptyEntries);
+                    var genresList = genresSplit.ToList();
+                    genres = string.Join(", ", genresList);
+                    if (!string.IsNullOrEmpty(genres))
+                        description = genres;
 
                     var posterStr = row.Value<string>("poster");
                     var poster = Uri.TryCreate(posterStr, UriKind.Absolute, out var posterUri) ? posterUri : null;
@@ -140,6 +145,9 @@ namespace Jackett.Common.Indexers.Abstract
                     // fix for #10883
                     if (UseP2PReleaseName && !string.IsNullOrWhiteSpace(row.Value<string>("p2p_release_name")))
                         title = row.Value<string>("p2p_release_name");
+
+                    if (!query.IsImdbQuery && !query.MatchQueryStringAND(title))
+                        continue;
 
                     var release = new ReleaseInfo
                     {
@@ -160,6 +168,9 @@ namespace Jackett.Common.Indexers.Abstract
                         MinimumRatio = 1,
                         MinimumSeedTime = 172800 // 48 hours
                     };
+                    if (release.Genres == null)
+                        release.Genres = new List<string>();
+                    release.Genres = release.Genres.Union(genres.Split(',')).ToList();
 
                     releases.Add(release);
                 }
